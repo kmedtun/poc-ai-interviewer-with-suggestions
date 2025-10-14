@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI Interview Analyzer</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>AI Interview Analyzer</h1>
+    <p class="subtitle">Paste Job Description + Resume → AI conducts interview</p>
+
+    <div id="input-section" class="card">
+      <label>Job Description</label>
+      <textarea id="job-description" placeholder="Paste job description here..."></textarea>
+      <label>Candidate Resume</label>
+      <textarea id="resume" placeholder="Paste candidate resume here..."></textarea>
+      <button id="start-btn">Start Interview</button>
+    </div>
+
+    <div id="chat-section" class="chat hidden">
+      <div id="chat-window"></div>
+      <p class="mic-label">Microphone Controls:</p>
+      <div class="mic-controls">
+        <button onclick="startRecording()">🎤 Start Speaking</button>
+        <button onclick="stopRecording()">⏹️ Stop</button>
+      </div>
+      <div class="mic-indicator hidden">🎤 Listening...</div>
+    </div>
+
+    <div id="report-section" class="hidden">
+      <h2>Interview Report</h2>
+      <pre id="report-content"></pre>
+    </div>
+  </div>
+  <script src="/static/script.js"></script>
+</body>
+</html>
