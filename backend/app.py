@@ -74,14 +74,17 @@ def candidate_answer():
 
     prompt = (
         f"{FRIENDLY_SYSTEM_PROMPT}\n\n"
+        "You are now acting as both an interviewer and a mentor helping the candidate improve. "
+        "For each candidate answer, first provide a brief, encouraging acknowledgement, "
+        "then give actionable feedback (how they could have structured or improved the answer), "
+        "and finally, ask the next relevant interview question. "
+        "Keep your tone friendly, supportive, and concise. "
+        "Output format:\n"
+        "Feedback: <your feedback here>\n"
+        "Next question: <your next question here>\n\n"
         f"Resume:\n{session['resume']}\n"
         f"Job description:\n{session['jd']}\n"
         f"Conversation so far:\n{context_text}\n"
-        "Continue the interview in a friendly, conversational manner. "
-        "Dont talk too much. Be concoise and to the point."
-        "Acknowledge the candidate's previous answer and smoothly transition to the next relevant question. Be concoise and to the point."
-         "Dont ask too many questions at once, just one at a time."
-        "If enough has been assessed, politely indicate the interview is concluding."
     )
 
     response = client.chat.completions.create(
@@ -89,11 +92,18 @@ def candidate_answer():
         messages=[{"role": "system", "content": prompt}]
     )
 
-    question = response.choices[0].message.content
-    session["history"].append({"role": "AI", "content": question})
+    full_response = response.choices[0].message.content
+    feedback, next_question = "", full_response
+    if "Feedback:" in full_response and "Next question:" in full_response:
+        parts = full_response.split("Next question:")
+        feedback = parts[0].replace("Feedback:", "").strip()
+        next_question = parts[1].strip()
+
+    session["history"].append({"role": "AI", "content": feedback})
+    session["history"].append({"role": "AI", "content": next_question})
     session["questions_asked"] += 1
 
-    return jsonify({"question": question, "end": False})
+    return jsonify({"feedback": feedback, "question": next_question, "end": False})
 
 
 @app.route("/finish_interview", methods=["POST"])
@@ -105,16 +115,31 @@ def finish_interview():
 
     prompt = (
         f"{FRIENDLY_SYSTEM_PROMPT}\n\n"
-        "You are now wrapping up the interview. Based on the following conversation, "
-        "provide a friendly but professional evaluation report for the candidate:\n\n"
-        "1. Executive Summary (2–3 sentences)\n"
-        "2. Skill Scores (1–10): Technical, Analytical, Communication, Problem-Solving, Interpersonal, JD Alignment\n"
-        "3. Qualitative Insights: Emotional Intelligence, Personality & Attitude, Authenticity\n"
-        "4. Final Recommendation (Hire/Next Round/Concerns)\n\n"
+        "You are now wrapping up the interview as both an interviewer and a mentor. "
+        "Based on the following conversation, create a **comprehensive, structured evaluation report** for the candidate.\n\n"
+        "The report should include:\n\n"
+        "1. **Executive Summary** – A 2–3 sentence overview of how the candidate performed overall.\n\n"
+        "2. **Detailed Skill Evaluation (with 1–10 scores)** – Use a bullet list with clear reasoning for each:\n"
+        "   - Technical Knowledge\n"
+        "   - Analytical Thinking\n"
+        "   - Communication Skills\n"
+        "   - Problem-Solving Skills\n"
+        "   - Interpersonal & Collaboration\n"
+        "   - Alignment with Job Description\n"
+        "   - Confidence & Clarity of Thought\n\n"
+        "3. **Interview Performance Review** – Summarize strengths and weaknesses observed in their answers. "
+        "Highlight what the candidate did well, and what aspects of their approach could be refined.\n\n"
+        "4. **Skill Enhancement Recommendations** – Provide actionable feedback on how the candidate can improve their interview performance. "
+        "For each major skill area (technical, communication, analytical, etc.), list practical steps and examples of how to improve. "
+        "Include advice on tone, pacing, clarity, and storytelling techniques during interviews.\n\n"
+        "5. **Sample Improved Answers (Optional)** – For 1–2 of the weaker answers, give a short example of how a more effective response could have been structured.\n\n"
+        "6. **Final Recommendation** – (Hire/Next Round/Needs Improvement) with a short justification.\n\n"
+        "Ensure the tone remains friendly, constructive, and motivating throughout. "
+        "The goal is to help the candidate become better, not just judge them.\n\n"
         f"Resume: {resume}\n"
         f"Job Description: {jd}\n"
         f"Conversation: {conversation}\n"
-        "Close the report with a friendly, encouraging note."
+        "End the report with a short, positive note of encouragement."
     )
 
     response = client.chat.completions.create(
